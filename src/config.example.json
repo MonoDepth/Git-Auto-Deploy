@@ -1,0 +1,25 @@
+{
+  "port": 8080,
+  "tlsSupport": false,
+  "certPath":  "",
+  "logPath": "./logFile.log",
+  "logLevel": "ERROR",
+  "includeConfigs": [
+    "/path/to/second/configFolder"
+  ],
+  "repositories": [
+    {
+      "url": "git@github.com:MonoDepth/Git-Auto-Deploy.git",
+      "remote": "origin",
+      "projectRoot": "/opt/MyProject/",
+      "secret": "superSecretToken",
+      "triggers": [
+        {
+          "type": "push-commit",
+          "identifier": "branchMatcher",          
+          "deploy": "./deploy.sh"
+        }        
+      ]
+    }
+  ]
+}
