@@ -51,10 +51,10 @@ const config = class {
     //Inline functions for the parsing
     const getValueDef = (wanted, def, settingName) => {
       if (wanted === null || wanted === undefined || wanted === '') {          
-        logger.info(`Using default value ${def} for setting ${settingName}`)
+        logger.debug(`Using default value ${def} for setting ${settingName}`)
         return def
       }
-      logger.info(`Found value ${wanted} for setting ${settingName}`)
+      logger.debug(`Found value ${wanted} for setting ${settingName}`)
       return wanted
     }
 

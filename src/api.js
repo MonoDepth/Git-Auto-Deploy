@@ -59,8 +59,7 @@ const handleDeploy = async (repoName, repo, triggers) => {
       trigger.statusCallback.forEach(callback => {
         msgSenders.push(new messageHandler(callback.service, callback.webhook))
       }) 
-      try {       
-        console.log('test') 
+      try {               
         await execAsync(`"${trigger.deploy}"`,{ cwd: repo.projectRoot, env: {...trigger.environmentVars}})
         msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} successful`, `Trigger: ${trigger.type} - ${trigger.identifier}`, '3066993'))
       } catch (stderr) {
@@ -68,6 +67,8 @@ const handleDeploy = async (repoName, repo, triggers) => {
       }
     }).call())
   })
+  return ''
+  // TODO: Wait for and log? (REST call from Github will probably timeout if we do that)
   try {
     await Promise.all(deployments)
   }

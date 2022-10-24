@@ -7,8 +7,7 @@ import { handleEvent } from './api.js'
 import process from 'node:process'
 
 try {
-  //Default loglevel to highest while we parse the settings and actual loglevel to not miss out on any errors
-  logger.setLogLevel('DEBUG')
+  logger.setLogLevel('WARNING')
   const config = new configuration()
   await config.load()
   const app = new koa()
@@ -28,7 +27,7 @@ try {
   .use(router.allowedMethods())
   .listen(config.port)
 
-  logger.info(`Running on port ${config.port}`)
+  logger.log(`Running on port ${config.port}`)
 }
 catch(ex) {
   logger.error(ex)

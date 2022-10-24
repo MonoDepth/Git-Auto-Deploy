@@ -17,6 +17,10 @@ const logger = class {
       console.log(`[DEBUG] ${message}`)
   }
 
+  static log = (message) => {
+    console.log(message)
+  }
+
   static setLogLevel = (logLevelString) => {
     this.level = this.convertLogLevel(logLevelString)
   }
