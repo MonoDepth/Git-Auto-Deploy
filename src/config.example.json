@@ -13,11 +13,21 @@
       "remote": "origin",
       "projectRoot": "/opt/MyProject/",
       "secret": "superSecretToken",
+      "privateKeyFile": "",
       "triggers": [
         {
           "type": "push-commit",
           "identifier": "branchMatcher",          
-          "deploy": "./deploy.sh"
+          "deploy": "./deploy.sh",
+          "environmentVars": {
+            "NODE_ENV": "production"
+          },
+          "statusCallback": [
+            {
+              "service": "DISCORD",
+              "webhook": "https://xxxxx"
+            }
+          ]
         }        
       ]
     }

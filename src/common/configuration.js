@@ -5,9 +5,10 @@ const config = class {
   //Config - default values  
   port = 8080
   tlsSupport = false
-  certPath = ""
+  certPath = ''
   logPath = './logFile.log'
   logLevel = 'ERROR'
+  privateKeyFile = ''
   includeConfigs = [
     '/path/to/configFolder'
   ]
@@ -21,8 +22,17 @@ const config = class {
         {
           type: "push-commit",
           identifier: "master",
-          deploy: "./deploy.sh"
-        }        
+          deploy: "./deploy.sh",
+          environmentVars: {
+            keyName: "keyVal"
+          },
+          statusCallback: [
+            {
+              service: "DISCORD",
+              webhook: "https://xxxx"
+            }
+          ]
+        }
       ]
     }
   ]
@@ -60,7 +70,7 @@ const config = class {
       repository.remote = getValueDef(repository.remote, 'origin', 'remote')        
       repository.secret = getValueDef(repository.secret, '', 'secret')
 
-      repository.triggers = getValueDef(repository.triggers, [], 'triggers')
+      repository.triggers = getValueDef(repository.triggers, [], 'triggers')      
       
       if (repository.triggers.length === 0) {
         reject(`triggers missing for ${repository.url}`)
@@ -80,6 +90,15 @@ const config = class {
         if (!trigger.deploy) {
           reject(`deploy not set for ${repository.url}`)
         }          
+
+        trigger.environmentVars = getValueDef(trigger.environmentVars, [], 'trigger.environmentVars')
+        trigger.statusCallback = getValueDef(trigger.statusCallback, [], 'trigger.statusCallback')
+
+        trigger.statusCallback.forEach(callback => {
+          callback.service = getValueDef(callback.service, null, 'callback.service')?.toUpperCase() ?? reject("callback is missing service attribute")
+          callback.webhook = getValueDef(callback.webhook, null, 'callback.webhook') ?? reject("callback is missing webhook attribute")
+        })
+
       })
       return true
     }
@@ -113,6 +132,7 @@ const config = class {
     this.tlsSupport = getValueDef(parsedObj.tlsSupport, this.tlsSupport, 'tlsSupport')
     this.certPath = getValueDef(parsedObj.tlsSupport, this.certPath, 'certPath')
     this.logPath = getValueDef(parsedObj.logPath, this.logPath, 'logPath')
+    this.privateKeyFile = getValueDef(parsedObj.privateKeyFile, this.privateKeyFile, 'privateKeyFile')
     this.includeConfigs = getValueDef(parsedObj.includeConfigs, [], 'includeConfigs')
     this.repositories = getValueDef(parsedObj.repositories, [], 'repositories')
     this.repositories.forEach(repo => {

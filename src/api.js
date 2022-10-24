@@ -1,5 +1,8 @@
 import logger from "./common/logger.js"
 import { createHmac, randomUUID } from 'node:crypto'
+import { execAsync } from "./common/utils.js"
+import messageHandler from "./common/messageHandler.js"
+
 
 const escapeRegex = (str) => {
   const res = str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -27,17 +30,54 @@ const verifyRequest = (eventType, uuid, body) => {
 }
 
 const matchingTrigger = (pushEvent, refName, trigger) => {
-  const regEx = new RegExp(`refs\/(tags|head)\/${escapeRegex(trigger.identifier)}`)
+  const regEx = new RegExp(`refs\/(tags|heads)\/${escapeRegex(trigger.identifier)}`)
   return trigger.type === pushEvent && (
     trigger.identifier === '*' ||
     regEx.test(refName)
   )
 }
 
-const handleDeploy = (triggers) => {
-
+// Fetch all changes from the remote
+// Forcefully checkout the commit hash and all the submodules as a detached head
+const prepareRepo = async (repo, commitHash) => {
+  try {    
+    await execAsync(`git fetch -p ${repo.remote}`, {cwd: repo.projectRoot, env: {GIT_SSH_COMMAND: `ssh -i ${repo.privateKeyFile.replace(/\\/g, '/')}`}})
+    await execAsync(`git checkout -q -f -d --recurse-submodules ${commitHash}`, {cwd: repo.projectRoot})
+  } catch (ex) {
+    return ex
+  }
+  return ''
 }
 
+// Loop through each deployment trigger, run the deployment script and call the webhooks
+const handleDeploy = async (repoName, repo, triggers) => {
+  const deployments = []  
+
+  triggers.forEach(trigger => {
+    deployments.push((async () => {      
+      const msgSenders = []
+      trigger.statusCallback.forEach(callback => {
+        msgSenders.push(new messageHandler(callback.service, callback.webhook))
+      }) 
+      try {       
+        console.log('test') 
+        await execAsync(`"${trigger.deploy}"`,{ cwd: repo.projectRoot, env: {...trigger.environmentVars}})
+        msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} successful`, `Trigger: ${trigger.type} - ${trigger.identifier}`, '3066993'))
+      } catch (stderr) {
+        msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} failed`, `Trigger: ${trigger.type}: ${trigger.identifier}`, '15158332'))
+      }
+    }).call())
+  })
+  try {
+    await Promise.all(deployments)
+  }
+  catch(ex) {
+    return ex
+  }
+  return ''
+}
+
+// Check the HMAC signature supplied by github
 const verifySignature = (signature, secret, body, repoUrl) => {
   if (secret != '') {
     if (!signature) {
@@ -56,7 +96,8 @@ const verifySignature = (signature, secret, body, repoUrl) => {
   return true
 }
 
-export const handleEvent = (ctx) => {
+//Main entrypoint for the webhook
+export const handleEvent = async (ctx) => {
   const eventType = ctx.get('X-GitHub-Event')
   let deliveryGuid = ctx.get('X-GitHub-Delivery')
   const signature = ctx.get('X-Hub-Signature-256')
@@ -92,6 +133,8 @@ export const handleEvent = (ctx) => {
     }
   }
 
+  logger.debug(`Pre-checks OK (${deliveryGuid})`)
+
   switch (eventType) {
     case 'ping':
     default:
@@ -113,16 +156,31 @@ export const handleEvent = (ctx) => {
         triggerType = 'push-commit'
       }
 
-      if (triggerType = '') {
+      if (triggerType === '') {
         logger.debug(`Invalid ref ${ref} (${deliveryGuid})`)
         ctx.status = 400
         ctx.body = `Invalid ref ${ref}`
-      }
+        return
+      }      
 
-      matchingRepos.forEach(repo => {
+      for (const repo of matchingRepos) {
+
         const triggers = repo.triggers.filter(trigger => matchingTrigger(triggerType, ref, trigger))
-        handleDeploy(triggers)
-      });
+        if (triggers.length === 0) {
+          logger.debug(`No matching triggers found (${deliveryGuid})`)
+          ctx.status = 200
+          continue
+        }
+
+        let result = await prepareRepo(repo, data.head_commit.id ?? ref)      
+        if (result !== '') {
+          ctx.status = 500
+          ctx.body = result
+          return
+        }
+
+        result = await handleDeploy(data.repository.full_name, repo, triggers)        
+      }      
       ctx.status = 200
   }  
 }
