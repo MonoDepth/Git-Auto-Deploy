@@ -7,7 +7,7 @@ import { eventController } from './eventController.js'
 import process from 'node:process'
 
 try {
-  logger.setLogLevel('WARNING')
+  logger.createLogger('warning', '')
   const config = new Configuration()
   await config.load()
   const app = new Koa()

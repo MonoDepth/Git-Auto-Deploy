@@ -2,7 +2,7 @@
   "port": 8080,
   "tlsSupport": false,
   "certPath":  "",
-  "logPath": "./logFile.log",
+  "logFile": "./logFile.log",
   "logLevel": "ERROR",
   "includeConfigs": [
     "/path/to/second/configFolder"
@@ -18,7 +18,7 @@
       "triggers": [
         {
           "type": "push-commit",
-          "identifier": "branchMatcher",          
+          "identifier": "branchMatcher",
           "deploy": "./deploy.sh",
           "shell": "sh -c",
           "environmentVars": {
@@ -29,8 +29,8 @@
               "service": "DISCORD",
               "webhook": "https://xxxxx"
             }
-          ]          
-        }        
+          ]
+        }
       ]
     }
   ]

@@ -6,7 +6,7 @@ const Configuration = class {
   port = 8080
   tlsSupport = false
   certPath = ''
-  logPath = './logFile.log'
+  logFile = './server.log'
   logLevel = 'ERROR'
   privateKeyFile = ''
   includeConfigs = [
@@ -131,12 +131,16 @@ const Configuration = class {
 
     // Set the loglevel first so the rest of the parsing displays the correct errors
     this.logLevel = getValueDef(parsedObj.logLevel, 'ERROR', 'logLevel')
+    this.logFile = getValueDef(parsedObj.logFile, this.logFile, 'logFile')
     logger.setLogLevel(this.logLevel)
+
+    if (this.logFile !== '') {
+      logger.addLogFile(this.logFile)
+    }
 
     this.port = getValueDef(parsedObj.port, this.port, 'port')
     this.tlsSupport = getValueDef(parsedObj.tlsSupport, this.tlsSupport, 'tlsSupport')
     this.certPath = getValueDef(parsedObj.tlsSupport, this.certPath, 'certPath')
-    this.logPath = getValueDef(parsedObj.logPath, this.logPath, 'logPath')
     this.privateKeyFile = getValueDef(parsedObj.privateKeyFile, this.privateKeyFile, 'privateKeyFile')
     this.includeConfigs = getValueDef(parsedObj.includeConfigs, [], 'includeConfigs')
     this.repositories = getValueDef(parsedObj.repositories, [], 'repositories')

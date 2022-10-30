@@ -104,4 +104,4 @@ dist
 .tern-port
 
 src/config.json
-src/logFile.log
+src/server.log*

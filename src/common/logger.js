@@ -1,50 +1,62 @@
-const Logger = class {
-  static level = 4
-  static error = (message) => {
-    if (this.level >= 4) {
-      console.error(`[ERROR] ${message}`)
+import winston from 'winston'
+
+const logger = class {
+  _logger = null
+  static createLogger = (logLevel, logFile) => {
+    this._logger = winston.createLogger({
+      level: this.convertLogLevel(logLevel),
+      format: winston.format.simple(),
+      transports: [
+        new winston.transports.Console()
+      ]
+    })
+
+    if (logFile !== '') {
+      this.addLogFile(logFile)
     }
+  }
+
+  static error = (message) => {
+    this._logger.error(message)
   }
 
   static warn = (message) => {
-    if (this.level >= 2) {
-      console.log(`[WARN] ${message}`)
-    }
+    this._logger.warn(message)
   }
 
   static info = (message) => {
-    if (this.level >= 3) {
-      console.log(`[INFO] ${message}`)
-    }
+    this._logger.info(message)
   }
 
   static debug = (message) => {
-    if (this.level >= 4) {
-      console.log(`[DEBUG] ${message}`)
-    }
+    this._logger.debug(message)
   }
 
   static log = (message) => {
-    console.log(message)
+    this._logger.info(message)
   }
 
   static setLogLevel = (logLevelString) => {
-    this.level = this.convertLogLevel(logLevelString)
+    this._logger.level = this.convertLogLevel(logLevelString)
+  }
+
+  static addLogFile = (logFile) => {
+    this._logger.add(new winston.transports.File({ filename: logFile, maxFiles: 5, maxsize: 10000000, tailable: true, zippedArchive: true }))
   }
 
   static convertLogLevel = (logLevelString) => {
     switch (logLevelString.toUpperCase()) {
       case 'DEBUG':
-        return 4
+        return 'debug'
       case 'INFO':
-        return 3
+        return 'info'
       case 'WARNING':
-        return 2
+        return 'warning'
       case 'ERROR':
       default:
-        return 1
+        return 'error'
     }
   }
 }
 
-export default Logger
+export default logger

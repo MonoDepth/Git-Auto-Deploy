@@ -67,7 +67,7 @@ const handleDeploy = async (repoName, repo, triggers) => {
         logger.debug(res)
         msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} successful`, `Trigger: ${trigger.type} - ${trigger.identifier}`, '3066993'))
       } catch (stderr) {
-        logger.debug(stderr)
+        logger.error(stderr)
         msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} failed`, `Trigger: ${trigger.type}: ${trigger.identifier}\nMessage: ${stderr}`, '15158332'))
       }
     }).call())
@@ -87,7 +87,7 @@ const handleDeploy = async (repoName, repo, triggers) => {
 const verifySignature = (signature, secret, body, repoUrl) => {
   if (secret !== '') {
     if (!signature) {
-      logger.debug(`No signature supplied for ${repoUrl} in http call`)
+      logger.warn(`No signature supplied for ${repoUrl} in http call`)
       return false
     }
 
@@ -103,7 +103,7 @@ const verifySignature = (signature, secret, body, repoUrl) => {
 }
 
 // Main entrypoint for the webhook
-export const handleEvent = async (ctx) => {
+export const eventController = async (ctx) => {
   const eventType = ctx.get('X-GitHub-Event')
   let deliveryGuid = ctx.get('X-GitHub-Delivery')
   const signature = ctx.get('X-Hub-Signature-256')
