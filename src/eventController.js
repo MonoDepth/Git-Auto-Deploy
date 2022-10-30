@@ -52,7 +52,7 @@ const prepareRepo = async (repo, commitHash) => {
 }
 
 // Loop through each deployment trigger, run the deployment script and call the webhooks
-const handleDeploy = async (repoName, repo, triggers) => {
+const handleDeploy = async (repoName, commitMessage, repo, triggers) => {
   const deployments = []
   const execCommand = os.platform() === 'win32' ? 'cmd /S /C' : '/bin/sh -e -c'
 
@@ -65,7 +65,7 @@ const handleDeploy = async (repoName, repo, triggers) => {
       try {
         const res = await execAsync(`${trigger.shell ? trigger.shell : execCommand} "${trigger.deploy}"`, { cwd: repo.projectRoot, env: { ...trigger.environmentVars } })
         logger.debug(res)
-        msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} successful`, `Trigger: ${trigger.type} - ${trigger.identifier}`, '3066993'))
+        msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} successful`, `Trigger: ${trigger.type} - ${trigger.identifier}\nMessage: ${commitMessage}`, '3066993'))
       } catch (stderr) {
         logger.error(stderr)
         msgSenders.forEach(async sender => await sender.sendMessage(`Deployment of ${repoName} failed`, `Trigger: ${trigger.type}: ${trigger.identifier}\nMessage: ${stderr}`, '15158332'))
@@ -181,7 +181,7 @@ export const eventController = async (ctx) => {
           }
         }
 
-        handleDeploy(data.repository.full_name, repo, triggers)
+        handleDeploy(data.repository.full_name, data.head_commit.message ?? '', repo, triggers)
       }
       ctx.status = 200
       break
