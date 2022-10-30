@@ -14,11 +14,13 @@
       "projectRoot": "/opt/MyProject/",
       "secret": "superSecretToken",
       "privateKeyFile": "",
+      "debug": true,
       "triggers": [
         {
           "type": "push-commit",
           "identifier": "branchMatcher",          
           "deploy": "./deploy.sh",
+          "shell": "sh -c",
           "environmentVars": {
             "NODE_ENV": "production"
           },
@@ -27,7 +29,7 @@
               "service": "DISCORD",
               "webhook": "https://xxxxx"
             }
-          ]
+          ]          
         }        
       ]
     }

@@ -1,35 +1,34 @@
-import koa from 'koa'
+import Koa from 'koa'
 import Router from 'koa-router'
-import koaBody from 'koa-body'
-import configuration from './common/configuration.js'
+import KoaBody from 'koa-body'
+import Configuration from './common/configuration.js'
 import logger from './common/logger.js'
-import { handleEvent } from './api.js'
+import { eventController } from './eventController.js'
 import process from 'node:process'
 
 try {
   logger.setLogLevel('WARNING')
-  const config = new configuration()
+  const config = new Configuration()
   await config.load()
-  const app = new koa()
+  const app = new Koa()
   const router = new Router()
 
   router.prefix('/api')
   router.get('/test')
-  router.post('/event', handleEvent)
+  router.post('/event', eventController)
 
   app
-  .use(async (ctx, next) => {
-    ctx.state.config = config
-    await next()
-  })
-  .use(new koaBody())
-  .use(router.routes())
-  .use(router.allowedMethods())
-  .listen(config.port)
+    .use(async (ctx, next) => {
+      ctx.state.config = config
+      await next()
+    })
+    .use(new KoaBody())
+    .use(router.routes())
+    .use(router.allowedMethods())
+    .listen(config.port)
 
   logger.log(`Running on port ${config.port}`)
-}
-catch(ex) {
+} catch (ex) {
   logger.error(ex)
-  process.exitCode = 1;
+  process.exitCode = 1
 }

@@ -1,8 +1,8 @@
 import fs from 'fs'
 import logger from './logger.js'
 
-const config = class {
-  //Config - default values  
+const Configuration = class {
+  // Config - default values
   port = 8080
   tlsSupport = false
   certPath = ''
@@ -12,24 +12,27 @@ const config = class {
   includeConfigs = [
     '/path/to/configFolder'
   ]
+
   repositories = [
     {
-      url: "git@github.com:MonoDepth/Git-Auto-Deploy.git",
-      remote: "origin",
-      projectRoot: "/opt/MyProject/",
-      secret: "",
+      url: 'git@github.com:MonoDepth/Git-Auto-Deploy.git',
+      remote: 'origin',
+      projectRoot: '/opt/MyProject/',
+      secret: '',
+      debug: true,
       triggers: [
         {
-          type: "push-commit",
-          identifier: "master",
-          deploy: "./deploy.sh",
+          type: 'push-commit',
+          identifier: 'master',
+          deploy: './deploy.sh',
+          shell: 'sh -c',
           environmentVars: {
-            keyName: "keyVal"
+            keyName: 'keyVal'
           },
           statusCallback: [
             {
-              service: "DISCORD",
-              webhook: "https://xxxx"
+              service: 'DISCORD',
+              webhook: 'https://xxxx'
             }
           ]
         }
@@ -37,20 +40,20 @@ const config = class {
     }
   ]
 
-  async load() { 
+  async load () {
     return new Promise((resolve, reject) => {
-        fs.readFile('./config.json', 'utf8',  this.parseData.bind(this, resolve, reject))
-    })        
-  }  
+      fs.readFile('./config.json', 'utf8', this.parseData.bind(this, resolve, reject))
+    })
+  }
 
-  parseData(resolve, reject, err, data) {
+  parseData (resolve, reject, err, data) {
     if (err) {
       throw err
-    }          
+    }
 
-    //Inline functions for the parsing
+    // Inline functions for the parsing
     const getValueDef = (wanted, def, settingName) => {
-      if (wanted === null || wanted === undefined || wanted === '') {          
+      if (wanted === null || wanted === undefined || wanted === '') {
         logger.debug(`Using default value ${def} for setting ${settingName}`)
         return def
       }
@@ -67,11 +70,12 @@ const config = class {
         reject(`projectRoot missing for ${repository.url}`)
       }
 
-      repository.remote = getValueDef(repository.remote, 'origin', 'remote')        
+      repository.remote = getValueDef(repository.remote, 'origin', 'remote')
       repository.secret = getValueDef(repository.secret, '', 'secret')
+      repository.debug = getValueDef(repository.debug, true, 'repository.debug')
 
-      repository.triggers = getValueDef(repository.triggers, [], 'triggers')      
-      
+      repository.triggers = getValueDef(repository.triggers, [], 'triggers')
+
       if (repository.triggers.length === 0) {
         reject(`triggers missing for ${repository.url}`)
       }
@@ -89,42 +93,43 @@ const config = class {
 
         if (!trigger.deploy) {
           reject(`deploy not set for ${repository.url}`)
-        }          
+        }
 
         trigger.environmentVars = getValueDef(trigger.environmentVars, [], 'trigger.environmentVars')
         trigger.statusCallback = getValueDef(trigger.statusCallback, [], 'trigger.statusCallback')
+        trigger.shell = getValueDef(trigger.shell, '', 'trigger.shell')
 
         trigger.statusCallback.forEach(callback => {
-          callback.service = getValueDef(callback.service, null, 'callback.service')?.toUpperCase() ?? reject("callback is missing service attribute")
-          callback.webhook = getValueDef(callback.webhook, null, 'callback.webhook') ?? reject("callback is missing webhook attribute")
+          callback.service = getValueDef(callback.service, null, 'callback.service')?.toUpperCase() ?? reject('callback is missing service attribute')
+          if (callback.service !== 'CONSOLE') {
+            callback.webhook = getValueDef(callback.webhook, null, 'callback.webhook') ?? reject('callback is missing webhook attribute')
+          }
         })
-
       })
       return true
     }
 
-
     const parseIncludeFiles = () => {
       const repositoriesToAdd = []
       this.includeConfigs.forEach(path => {
-        fs.readFile(path, 'utf8', function (err,data) {
+        fs.readFile(path, 'utf8', function (err, data) {
           if (err) {
             reject(err)
           }
-          let includeRepo = JSON.parse(data);
+          const includeRepo = JSON.parse(data)
           includeRepo.forEach(repo => {
             if (validateRepository(repo)) {
               repositoriesToAdd.push(repo)
-            }              
+            }
           })
         })
       })
       return repositoriesToAdd
     }
-    
-    let parsedObj = JSON.parse(data);
 
-    //Set the loglevel first so the rest of the parsing displays the correct errors
+    const parsedObj = JSON.parse(data)
+
+    // Set the loglevel first so the rest of the parsing displays the correct errors
     this.logLevel = getValueDef(parsedObj.logLevel, 'ERROR', 'logLevel')
     logger.setLogLevel(this.logLevel)
 
@@ -142,4 +147,4 @@ const config = class {
     resolve()
   }
 }
-export default config
+export default Configuration
