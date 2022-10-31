@@ -18,10 +18,10 @@ const MessageHandler = class {
           username: 'Git Auto Deploy',
           embeds: [
             {
-              title,
+              title: title.slice(0, 256), // Discord embed limits
               type: 'rich',
               color,
-              description
+              description: description.slice(-4096) // Last 4096 chars of the string
             }
           ]
         }
