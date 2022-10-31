@@ -146,6 +146,7 @@ export const eventController = async (ctx) => {
     case 'push':
       if (data.deleted) {
         logger.debug(`Skipping deletion push on ${data.repository.full_name}`)
+        ctx.status = 200
         return
       }
 
