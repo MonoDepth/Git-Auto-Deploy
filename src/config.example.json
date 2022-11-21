@@ -1,0 +1,37 @@
+{
+  "port": 8080,
+  "tlsSupport": false,
+  "certPath":  "",
+  "logFile": "./logFile.log",
+  "logLevel": "ERROR",
+  "includeConfigs": [
+    "/path/to/second/configFolder"
+  ],
+  "repositories": [
+    {
+      "url": "git@github.com:MonoDepth/Git-Auto-Deploy.git",
+      "remote": "origin",
+      "projectRoot": "/opt/MyProject/",
+      "secret": "superSecretToken",
+      "privateKeyFile": "",
+      "debug": true,
+      "triggers": [
+        {
+          "type": "push-commit",
+          "identifier": "branchMatcher",
+          "deploy": "./deploy.sh",
+          "shell": "sh -c",
+          "environmentVars": {
+            "NODE_ENV": "production"
+          },
+          "statusCallback": [
+            {
+              "service": "DISCORD",
+              "webhook": "https://xxxxx"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
